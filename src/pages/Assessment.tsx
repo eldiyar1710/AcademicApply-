@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Sparkles, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
@@ -10,9 +10,22 @@ type Question = {
   question: string;
   type: "single" | "multi";
   options: string[];
+  forTypes?: string[];
 };
 
-const questions: Question[] = [
+const allQuestions: Question[] = [
+  // Common first question
+  {
+    id: "determined",
+    question: "Ты уже определился со своим будущим?",
+    type: "single",
+    options: [
+      "Да, я знаю куда хочу поступить",
+      "Примерно знаю направление",
+      "Я ещё не определился с будущим",
+    ],
+  },
+  // School-specific
   {
     id: "goal",
     question: "Какая у тебя главная цель?",
@@ -21,10 +34,37 @@ const questions: Question[] = [
       "Поступить в университет в своей стране",
       "Поступить за рубежом",
       "Определить свою будущую профессию",
-      "Поменять специальность / университет",
       "Я ещё не определился",
     ],
+    forTypes: ["school", "graduate"],
   },
+  // Student-specific
+  {
+    id: "student_goal",
+    question: "Что ты хочешь сделать?",
+    type: "single",
+    options: [
+      "Поменять специальность",
+      "Перевестись в другой университет",
+      "Учиться по обмену за рубежом",
+      "Перейти в магистратуру в другом вузе",
+    ],
+    forTypes: ["student"],
+  },
+  // Student — current situation
+  {
+    id: "current_edu",
+    question: "Где ты сейчас учишься?",
+    type: "single",
+    options: [
+      "1 курс бакалавриата",
+      "2 курс бакалавриата",
+      "3-4 курс бакалавриата",
+      "Магистратура",
+    ],
+    forTypes: ["student"],
+  },
+  // Common interests
   {
     id: "interests",
     question: "Какие предметы тебе нравятся больше всего?",
@@ -41,21 +81,24 @@ const questions: Question[] = [
       "Медицина",
     ],
   },
+  // Skills — what you already know
   {
     id: "skills",
-    question: "Какие навыки у тебя уже есть?",
+    question: "Какие навыки у тебя уже есть? (отметь что знаешь)",
     type: "multi",
     options: [
       "IELTS / TOEFL (английский)",
       "Программирование",
-      "Работа с данными",
+      "Работа с данными / Excel",
       "Олимпиады / конкурсы",
-      "Волонтёрство",
+      "Волонтёрство / социальные проекты",
       "Спорт (достижения)",
       "Музыка / творчество",
-      "Лидерство / проекты",
+      "Лидерство / свои проекты",
+      "Второй иностранный язык",
     ],
   },
+  // Country preference
   {
     id: "country",
     question: "В какой стране ты хотел бы учиться?",
@@ -68,9 +111,11 @@ const questions: Question[] = [
       "Великобритания",
       "Германия",
       "Южная Корея / Япония",
+      "Турция",
       "Не имеет значения",
     ],
   },
+  // Budget
   {
     id: "budget",
     question: "Какой формат обучения тебе подходит?",
@@ -91,9 +136,17 @@ const Assessment = () => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
 
+  // Filter questions by user type
+  const questions = useMemo(() => {
+    return allQuestions.filter((q) => {
+      if (!q.forTypes) return true;
+      return q.forTypes.includes(userType);
+    });
+  }, [userType]);
+
   const currentQ = questions[step];
   const progress = ((step + 1) / questions.length) * 100;
-  const selected = answers[currentQ.id] || [];
+  const selected = answers[currentQ?.id] || [];
 
   const toggleOption = (option: string) => {
     if (currentQ.type === "single") {
@@ -121,10 +174,12 @@ const Assessment = () => {
     }
   };
 
+  const userTypeTitle = userType === "school" ? "Школьник" : userType === "graduate" ? "Выпускник" : "Студент";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="px-4 py-6 border-b border-border">
+      <div className="px-4 py-6 border-b border-border bg-card">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button
             onClick={() => (step > 0 ? setStep(step - 1) : navigate("/"))}
@@ -132,9 +187,13 @@ const Assessment = () => {
           >
             <ArrowLeft className="w-4 h-4" /> Назад
           </button>
-          <span className="text-sm text-muted-foreground font-medium">
-            {step + 1} из {questions.length}
-          </span>
+          <div className="text-center">
+            <span className="text-xs text-primary font-medium">{userTypeTitle}</span>
+            <p className="text-sm text-muted-foreground font-medium">
+              {step + 1} из {questions.length}
+            </p>
+          </div>
+          <div className="w-16" />
         </div>
         <div className="max-w-3xl mx-auto mt-4">
           <Progress value={progress} className="h-2" />
@@ -189,6 +248,25 @@ const Assessment = () => {
                   );
                 })}
               </div>
+
+              {/* "Not determined" hint for school users */}
+              {currentQ.id === "determined" && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="mt-6 p-4 rounded-xl bg-secondary/5 border border-secondary/10 flex items-start gap-3"
+                >
+                  <HelpCircle className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-foreground font-medium">Не переживай!</p>
+                    <p className="text-xs text-muted-foreground">
+                      Если ты ещё не определился — наш AI поможет найти профессии будущего,
+                      которые подойдут именно тебе. Мы покажем актуальные направления на ближайшие 10 лет.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           </AnimatePresence>
 

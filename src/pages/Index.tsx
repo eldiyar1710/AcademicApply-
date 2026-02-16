@@ -4,15 +4,19 @@ import HeroBackground from "@/components/HeroBackground";
 import UserTypeCards from "@/components/UserTypeCards";
 import FeaturesSection from "@/components/FeaturesSection";
 import StatsSection from "@/components/StatsSection";
+import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 const Index = () => {
   return (
     <div className="min-h-screen">
+      <Header transparent />
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
         <HeroBackground />
-        <div className="relative z-10 text-center max-w-5xl mx-auto">
+        <div className="relative z-10 text-center max-w-5xl mx-auto pt-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -64,14 +68,15 @@ const Index = () => {
             transition={{ delay: 1.5 }}
             className="mt-16"
           >
-            <a href="#features" className="inline-flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors text-sm">
-              Узнать больше <ArrowRight className="w-4 h-4" />
+            <a href="#how-it-works" className="inline-flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors text-sm">
+              Как это работает <ArrowRight className="w-4 h-4" />
             </a>
           </motion.div>
         </div>
       </section>
 
       <StatsSection />
+      <HowItWorks />
       <FeaturesSection />
       <Footer />
     </div>
