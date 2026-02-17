@@ -9,8 +9,9 @@ const stats = [
 
 const StatsSection = () => {
   return (
-    <section className="py-20 px-4 bg-primary">
-      <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <section className="py-20 px-4 bg-primary relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-accent/30 opacity-90" />
+      <div className="relative z-10 max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}

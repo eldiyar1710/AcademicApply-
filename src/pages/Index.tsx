@@ -21,7 +21,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card/20 backdrop-blur-md border border-card/10 text-primary-foreground text-sm font-medium mb-8"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-card/15 backdrop-blur-lg border border-card/10 text-primary-foreground text-sm font-medium mb-8 shadow-lg"
           >
             <Sparkles className="w-4 h-4" />
             AI-платформа для вашего будущего

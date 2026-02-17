@@ -22,10 +22,10 @@ const Header = ({ transparent = false }: HeaderProps) => {
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         transparent
           ? "bg-transparent"
-          : "bg-card/90 backdrop-blur-xl border-b border-border/50"
+          : "bg-card/80 backdrop-blur-2xl border-b border-border/30 shadow-card"
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -42,7 +42,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   isActive
                     ? transparent
                       ? "bg-card/20 text-primary-foreground"
@@ -62,7 +62,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
         <div className="hidden md:flex items-center gap-3">
           <Link
             to="/assessment?type=school"
-            className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+            className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
           >
             Начать
           </Link>
@@ -82,14 +82,14 @@ const Header = ({ transparent = false }: HeaderProps) => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="md:hidden bg-card border-b border-border px-4 py-4 space-y-2"
+          className="md:hidden bg-card/95 backdrop-blur-2xl border-b border-border/30 px-4 py-4 space-y-2 rounded-b-3xl shadow-card"
         >
           {navLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="block px-4 py-3 rounded-2xl text-sm font-medium text-foreground hover:bg-muted transition-all duration-300"
             >
               {link.label}
             </Link>
@@ -97,7 +97,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
           <Link
             to="/assessment?type=school"
             onClick={() => setMobileOpen(false)}
-            className="block px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold text-center"
+            className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
           >
             Начать
           </Link>

@@ -49,7 +49,7 @@ const HowItWorks = () => {
 
         <div className="relative">
           {/* Connection line */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-border -translate-x-1/2" />
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-border to-transparent -translate-x-1/2" />
 
           <div className="space-y-12">
             {steps.map((step, i) => (
@@ -65,9 +65,9 @@ const HowItWorks = () => {
                   <h3 className="text-lg font-heading font-bold text-foreground mb-1">{step.title}</h3>
                   <p className="text-sm text-muted-foreground">{step.description}</p>
                 </div>
-                <div className="relative z-10 w-14 h-14 rounded-2xl bg-primary flex items-center justify-center shadow-lg flex-shrink-0">
-                  <step.icon className="w-6 h-6 text-primary-foreground" />
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center">
+                <div className="relative z-10 w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-hero flex-shrink-0">
+                  <step.icon className="w-7 h-7 text-primary-foreground" />
+                  <span className="absolute -top-1.5 -right-1.5 w-7 h-7 rounded-full bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center shadow-md">
                     {i + 1}
                   </span>
                 </div>
