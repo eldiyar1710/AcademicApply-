@@ -30,11 +30,8 @@ const Header = ({ transparent = false }: HeaderProps) => {
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <img src={logo} alt="AcademicApply" className="h-9 w-auto object-contain group-hover:scale-105 transition-transform" />
-          <span className={`font-heading font-bold text-lg ${transparent ? "text-primary-foreground" : "text-foreground"}`}>
-            AcademicApply
-          </span>
+        <Link to="/" className="flex items-center group">
+          <img src={logo} alt="AcademicApply" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform" />
         </Link>
 
         {/* Desktop Nav */}
