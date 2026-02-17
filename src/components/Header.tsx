@@ -31,17 +31,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center group">
-          <div className="h-10 overflow-hidden group-hover:scale-105 transition-transform">
-            <img 
-              src={logo} 
-              alt="AcademicApply" 
-              className="h-10 w-auto object-contain"
-              style={{ 
-                mixBlendMode: transparent ? 'screen' : 'multiply',
-                filter: transparent ? 'brightness(1.8) contrast(1.2)' : 'none'
-              }}
-            />
-          </div>
+          <img src={logo} alt="AcademicApply" className="h-10 w-auto object-contain group-hover:scale-105 transition-transform mix-blend-multiply dark:mix-blend-screen" />
         </Link>
 
         {/* Desktop Nav */}
