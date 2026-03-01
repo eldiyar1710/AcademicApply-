@@ -27,7 +27,7 @@ const Register = () => {
 
   const canSubmit = name.trim().length > 1 && contact.trim().length > 3 && password.trim().length >= 6 && accepted;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!accepted) {
@@ -39,27 +39,42 @@ const Register = () => {
       return;
     }
 
-    registerUser({
-      name: name.trim(),
-      contact: contact.trim(),
-      timezone: getTimezone(),
-      legalAcceptedAt: new Date().toISOString(),
-      attribution: attr
-        ? {
-            leadSessionId: attr.leadSessionId,
-            source: attr.source,
-            eventSlug: attr.eventSlug,
-            expertRef: attr.expertRef,
-          }
-        : undefined,
-    });
+    const userType = searchParams.get("type") as "school" | "graduate" | "student" | null;
 
-    toast({
-      title: "Аккаунт создан",
-      description: "Мы сохранили твои результаты в кабинете",
-    });
+    try {
+      await registerUser({
+        name: name.trim(),
+        contact: contact.trim(),
+        password: password.trim(),
+        timezone: getTimezone(),
+        legalAcceptedAt: new Date().toISOString(),
+        userType: userType || undefined,
+        attribution: attr
+          ? {
+              leadSessionId: attr.leadSessionId,
+              source: attr.source,
+              eventSlug: attr.eventSlug,
+              expertRef: attr.expertRef,
+            }
+          : undefined,
+      });
 
-    navigate(`/dashboard?${searchParams.toString()}`);
+      toast({
+        title: "Аккаунт создан",
+        description: "Данные сохранены в Firebase",
+      });
+
+      navigate(`/dashboard?${searchParams.toString()}`);
+    } catch (err) {
+      const e = err as any;
+      const details = e?.code ? `${e.code}: ${e.message || ""}` : (e?.message || "");
+      const extra = e?.code === "auth/email-already-in-use" ? " Этот email уже зарегистрирован — перейдите на /login." : "";
+      toast({
+        title: "Ошибка",
+        description: `Не удалось сохранить данные в Firebase. ${details}${extra}`.trim(),
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -77,6 +77,7 @@ const Results = () => {
   const navigate = useNavigate();
   const userType = searchParams.get("type") || "school";
   const user = getUser();
+  const [wishlist, setWishlist] = useState(getWishlist());
 
   const preferredCareer = (searchParams.get("preferred_career") || "").trim();
 
@@ -242,33 +243,48 @@ const Results = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {careers.map((career, i) => (
-                <motion.div
-                  key={career.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 + i * 0.1 }}
-                  className="p-5 rounded-xl bg-card shadow-card border border-border/50"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-heading font-semibold text-foreground">{career.title}</h3>
-                      <p className="text-xs text-muted-foreground">{career.trend}</p>
+              {careers.map((career, i) => {
+                const isCareerSaved = wishlist.includes(`career-${career.title}`);
+                return (
+                  <motion.div
+                    key={career.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + i * 0.1 }}
+                    className="p-5 rounded-xl bg-card shadow-card border border-border/50 relative"
+                  >
+                    {/* Heart Button for Career */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(`career-${career.title}`);
+                        setWishlist(getWishlist());
+                      }}
+                      className="absolute top-3 right-3 p-2 rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Heart className={`w-4 h-4 ${isCareerSaved ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                    </button>
+
+                    <div className="flex items-start justify-between mb-2 pr-8">
+                      <div>
+                        <h3 className="font-heading font-semibold text-foreground">{career.title}</h3>
+                        <p className="text-xs text-muted-foreground">{career.trend}</p>
+                      </div>
+                      <Badge className="bg-primary text-primary-foreground">{career.match}%</Badge>
                     </div>
-                    <Badge className="bg-primary text-primary-foreground">{career.match}%</Badge>
-                  </div>
-                  {preferredCareer && preferredCareer !== "Пока не знаю" && career.title === preferredCareer && (
-                    <div className="mb-2">
-                      <Badge variant="secondary">Твой выбор</Badge>
+                    {preferredCareer && preferredCareer !== "Пока не знаю" && career.title === preferredCareer && (
+                      <div className="mb-2">
+                        <Badge variant="secondary">Твой выбор</Badge>
+                      </div>
+                    )}
+                    <p className="text-sm text-muted-foreground mb-3">{career.description}</p>
+                    <div className="flex flex-wrap gap-3 text-xs">
+                      <span className="text-foreground font-medium">{career.salary}</span>
+                      <span className="text-muted-foreground">{career.futureYears}</span>
                     </div>
-                  )}
-                  <p className="text-sm text-muted-foreground mb-3">{career.description}</p>
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <span className="text-foreground font-medium">{career.salary}</span>
-                    <span className="text-muted-foreground">{career.futureYears}</span>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Skills gap notice */}
@@ -354,60 +370,75 @@ const Results = () => {
             </div>
 
             <div className="space-y-4">
-              {visibleUniversities.map((uni, i) => (
-                <motion.div
-                  key={uni.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + i * 0.1 }}
-                  className="p-6 rounded-xl bg-card shadow-card border border-border/50 hover:shadow-card-hover transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/university/${uni.id}`)}
-                >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-heading font-bold text-foreground">{uni.name}</h3>
-                        <Badge className={typeLabels[uni.type].color}>
-                          {typeLabels[uni.type].text}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" /> {uni.city}, {uni.country}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Trophy className="w-3.5 h-3.5" /> {uni.ranking}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {domainFilteredPrograms(uni.programs).slice(0, 4).map((p) => (
-                          <span key={p.name} className="px-2.5 py-1 rounded-md bg-primary/5 text-primary text-xs font-medium">
-                            {p.name}
+              {visibleUniversities.map((uni, i) => {
+                const isWishlisted = wishlist.includes(uni.id);
+                return (
+                  <motion.div
+                    key={uni.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className="p-6 rounded-xl bg-card shadow-card border border-border/50 hover:shadow-card-hover transition-shadow cursor-pointer relative"
+                    onClick={() => navigate(`/university/${uni.id}`)}
+                  >
+                    {/* Heart Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(uni.id);
+                        setWishlist(getWishlist());
+                      }}
+                      className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted transition-colors"
+                    >
+                      <Heart className={`w-5 h-5 ${isWishlisted ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                    </button>
+                    
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-12">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-heading font-bold text-foreground">{uni.name}</h3>
+                          <Badge className={typeLabels[uni.type].color}>
+                            {typeLabels[uni.type].text}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5" /> {uni.city}, {uni.country}
                           </span>
-                        ))}
-                        {domainFilteredPrograms(uni.programs).length > 4 && (
-                          <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs">
-                            +{domainFilteredPrograms(uni.programs).length - 4}
+                          <span className="flex items-center gap-1">
+                            <Trophy className="w-3.5 h-3.5" /> {uni.ranking}
                           </span>
-                        )}
+                        </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {domainFilteredPrograms(uni.programs).slice(0, 4).map((p) => (
+                            <span key={p.name} className="px-2.5 py-1 rounded-md bg-primary/5 text-primary text-xs font-medium">
+                              {p.name}
+                            </span>
+                          ))}
+                          {domainFilteredPrograms(uni.programs).length > 4 && (
+                            <span className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs">
+                              +{domainFilteredPrograms(uni.programs).length - 4}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <BookOpen className="w-3.5 h-3.5" />
+                          {uni.requirements.slice(0, 2).map((r) => r.title).join(", ")}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        {uni.requirements.slice(0, 2).map((r) => r.title).join(", ")}
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="text-center">
+                          <div className="text-3xl font-heading font-bold text-primary">{uni.match}%</div>
+                          <div className="text-xs text-muted-foreground">совпадение</div>
+                        </div>
+                        <Button size="sm" className="gap-1.5">
+                          Подробнее <ExternalLink className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="text-center">
-                        <div className="text-3xl font-heading font-bold text-primary">{uni.match}%</div>
-                        <div className="text-xs text-muted-foreground">совпадение</div>
-                      </div>
-                      <Button size="sm" className="gap-1.5">
-                        Подробнее <ExternalLink className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
 

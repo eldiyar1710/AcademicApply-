@@ -1,16 +1,22 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, BadgePercent, LogOut } from "lucide-react";
+import { BadgePercent, Crown, LogOut, ArrowRight, Calendar, UserCheck, MessageCircle, Heart, Target, GraduationCap } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ConsultantInvitation from "@/components/ConsultantInvitation";
+import AIChat from "@/components/AIChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { getDiscountInfo } from "@/lib/attribution";
-import { getProfileProgress, getUser, logout, updateUserProfile } from "@/lib/auth";
+import { getDaysRemaining, getPlanLabel, isPlanActive, hasAccess, getProfileProgress, getUser, logout, updateUserProfile } from "@/lib/auth";
 import { clearLastResultsQuery, getLastResultsQuery } from "@/lib/results";
+import { getWishlist, toggleWishlist } from "@/lib/wishlist";
+import { useToast } from "@/hooks/use-toast";
+import ReferralSystem from "@/components/ReferralSystem";
+import QRCodeSystem from "@/components/QRCodeSystem";
 
 const formatRemaining = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -22,15 +28,32 @@ const formatRemaining = (ms: number) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
 
   const user = useMemo(() => getUser(), []);
   const discount = useMemo(() => getDiscountInfo(), []);
   const progress = getProfileProgress(user);
 
-  const [userType, setUserType] = useState<"school" | "graduate" | "student">(user?.profile.userType || "school");
+  // Debug: Log user information
+  console.log('Dashboard Debug:', { 
+    user: user ? {
+      name: user.name,
+      plan: user.plan,
+      userType: user.profile?.userType
+    } : null,
+    hasUser: !!user 
+  });
+
+  // Get userType from user profile or URL params (for initial load after registration)
+  const urlUserType = searchParams.get("type") as "school" | "graduate" | "student" | null;
+  const savedUserType = user?.profile.userType;
+  const effectiveUserType = savedUserType || urlUserType || "school";
+
+  const [userType, setUserType] = useState<"school" | "graduate" | "student">(effectiveUserType);
   const [gpa, setGpa] = useState(user?.profile.gpa || "");
   const [ielts, setIelts] = useState(user?.profile.ielts || "");
   const [dream, setDream] = useState(user?.profile.dream || "");
+  const [wishlist, setWishlist] = useState(getWishlist());
 
   if (!user) {
     return (
@@ -39,8 +62,8 @@ const Dashboard = () => {
         <div className="pt-24 pb-16 px-4">
           <div className="max-w-xl mx-auto text-center">
             <h1 className="text-2xl font-heading font-bold text-foreground mb-3">Нужно войти</h1>
-            <p className="text-muted-foreground mb-6">Создай аккаунт, чтобы открыть результаты и кабинет.</p>
-            <Button onClick={() => navigate(`/register?${searchParams.toString()}`)}>Создать аккаунт</Button>
+            <p className="text-muted-foreground mb-6">Создайте аккаунт, чтобы открыть результаты и кабинет.</p>
+            <Button onClick={() => navigate(`/register?${searchParams.toString()}`)}>Создайте аккаунт</Button>
           </div>
         </div>
         <Footer />
@@ -88,16 +111,18 @@ const Dashboard = () => {
               <p className="text-muted-foreground mt-1">Привет, {user.name}</p>
               <p className="text-xs text-muted-foreground mt-2">Timezone: {user.timezone || "—"}</p>
             </div>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => {
-                logout();
-                navigate("/");
-              }}
-            >
-              <LogOut className="w-4 h-4" /> Выйти
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+              >
+                <LogOut className="w-4 h-4" /> Выйти
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -160,6 +185,139 @@ const Dashboard = () => {
             </div>
 
             <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+              <h2 className="font-heading font-semibold text-foreground">Мой тариф</h2>
+              <p className="text-xs text-muted-foreground mt-1">Текущий план и доступы</p>
+
+              <div className="mt-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                <div className="flex items-center gap-2">
+                  <Crown className={`w-5 h-5 ${isPlanActive(user) ? "text-primary" : "text-muted-foreground"}`} />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{getPlanLabel(user?.plan || "free")}</p>
+                    {user?.plan !== "free" && (
+                      <p className="text-xs text-muted-foreground">
+                        {isPlanActive(user) ? `Активен еще ${getDaysRemaining(user)} дней` : `Срок истек`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {user?.assignedExpertId && (
+                  <div className="mt-3 pt-3 border-t border-primary/10 flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-primary" />
+                    <p className="text-xs text-muted-foreground">Привязан эксперт: #{user.assignedExpertId.slice(-6)}</p>
+                  </div>
+                )}
+              </div>
+
+              {user?.plan !== "expert" && (
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate("/paywall?upgrade=1")}
+                  >
+                    Улучшить тариф
+                  </Button>
+                </div>
+              )}
+
+              {user?.plan === "basic" && isPlanActive(user) && (
+                <div className="mt-4 space-y-2">
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => navigate("/plan")}
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Мой план
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => navigate("/tracking?calendar=1")}
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Встречи с экспертом
+                  </Button>
+                </div>
+              )}
+
+              {user?.plan === "expert" && isPlanActive(user) && (
+                <div className="mt-4 space-y-2">
+                  <Button
+                    className="w-full gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                    onClick={() => navigate("/expert-plan")}
+                  >
+                    <Crown className="w-4 h-4" />
+                    Мой план
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => navigate("/tracking?calendar=1")}
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Встречи с экспертом
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+              <h2 className="font-heading font-semibold text-foreground">Моя цель</h2>
+              <p className="text-xs text-muted-foreground mt-1">Целевой университет из избранного</p>
+
+              <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-primary/5 to-accent/5 border border-primary/20">
+                {wishlist.length > 0 ? (
+                  <div className="space-y-3">
+                    {wishlist.slice(0, 3).map((item) => (
+                      <div key={item} className="flex items-center gap-3 p-2 rounded-lg bg-white/50">
+                        <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                        <span className="text-sm font-medium truncate">{item.replace('uni-', '')}</span>
+                      </div>
+                    ))}
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2 mt-2"
+                      onClick={() => navigate("/tracking")}
+                    >
+                      <Target className="w-4 h-4" />
+                      Выбрать целевой
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                        <Heart className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Выберите целевой университет</p>
+                        <p className="text-xs text-muted-foreground">Из избранного или результатов</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-full gap-2"
+                        onClick={() => navigate("/results")}
+                      >
+                        <Target className="w-4 h-4" />
+                        Выбрать из избранного
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full gap-2 text-sm"
+                        onClick={goToResults}
+                      >
+                        <GraduationCap className="w-4 h-4" />
+                        Посмотреть рекомендации
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
               <h2 className="font-heading font-semibold text-foreground">Витрина</h2>
               <p className="text-xs text-muted-foreground mt-1">Тарифы и бонусы</p>
 
@@ -212,6 +370,39 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Chat for Free tier, ConsultantInvitation for others */}
+      {(!user?.plan || user?.plan === "free") ? (
+        <AIChat 
+          userName={user?.name || ""}
+          userType={userType}
+          onRequestHumanConsultant={() => {
+            // Show consultant invitation
+            toast({
+              title: "Консультант",
+              description: "Записываем вас на бесплатную консультацию...",
+            });
+          }}
+          hasUsedFreeCall={false}
+        />
+      ) : (
+        <ConsultantInvitation 
+          userType={userType}
+          userName={user?.name || ""}
+          dream={dream}
+          recommendations={[]}
+          universities={[]}
+          hasFreeCall={false}
+          userPlan={user?.plan}
+        />
+      )}
+
+      {/* Реферальная система и QR-коды */}
+      <div className="max-w-4xl mx-auto mt-8">
+        <ReferralSystem />
+        <QRCodeSystem />
+      </div>
+
       <Footer />
     </div>
   );

@@ -11,15 +11,18 @@ import { isAuthed } from "@/lib/auth";
 const Paywall = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isUpgradeFlow = searchParams.get("upgrade") === "1";
+  const authed = isAuthed();
 
   useEffect(() => {
     ensureOrganicAttribution();
   }, []);
 
   useEffect(() => {
-    if (!isAuthed()) return;
+    if (!authed) return;
+    if (isUpgradeFlow) return;
     navigate(`/results?${searchParams.toString()}`);
-  }, [navigate, searchParams]);
+  }, [authed, isUpgradeFlow, navigate, searchParams]);
 
   const attr = getAttribution();
   const fromEvent = attr?.source === "offline_qr";
@@ -89,11 +92,76 @@ const Paywall = () => {
               </div>
             </div>
 
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* $49 Basic Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="p-6 rounded-xl bg-primary/5 border border-primary/20"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl font-bold text-primary">$49</span>
+                  <span className="text-sm text-muted-foreground">/месяц</span>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">AI Roadmap</h3>
+                <ul className="text-sm text-muted-foreground space-y-1 mb-4">
+                  <li>• 3 встречи/неделю</li>
+                  <li>• План поступления</li>
+                  <li>• Бесплатные курсы</li>
+                </ul>
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => navigate(`/checkout?plan=ai_roadmap&${searchParams.toString()}`)}
+                >
+                  Выбрать
+                </Button>
+              </motion.div>
+
+              {/* $490 Expert Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="p-6 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 border border-amber-300"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-amber-600">$490</span>
+                    <span className="text-sm text-muted-foreground">/3 месяца</span>
+                  </div>
+                  <span className="px-2 py-1 bg-amber-500 text-white text-xs rounded-full">EXPERT</span>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Expert Mentorship</h3>
+                <ul className="text-sm text-muted-foreground space-y-1 mb-4">
+                  <li>• 2 встречи/день</li>
+                  <li>• Индивидуальный план</li>
+                  <li>• AI агент 24/7</li>
+                  <li>• Видеозвонки</li>
+                </ul>
+                <Button 
+                  className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                  onClick={() => navigate(`/checkout?plan=expert_mentorship&${searchParams.toString()}`)}
+                >
+                  Выбрать Expert
+                </Button>
+              </motion.div>
+            </div>
+
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Button className="gap-2" size="lg" onClick={() => navigate(`/register?${searchParams.toString()}`)}>
-                Создать аккаунт <ArrowRight className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="lg" onClick={() => navigate("/")}>На главную</Button>
+              {!authed && (
+                <Button className="gap-2" size="lg" onClick={() => navigate(`/register?${searchParams.toString()}`)}>
+                  Создать аккаунт <ArrowRight className="w-4 h-4" />
+                </Button>
+              )}
+              {authed ? (
+                <Button size="lg" onClick={() => navigate("/dashboard")}>
+                  Назад в кабинет
+                </Button>
+              ) : (
+                <Button variant="outline" size="lg" onClick={() => navigate("/")}>На главную</Button>
+              )}
             </div>
           </div>
         </div>

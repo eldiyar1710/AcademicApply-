@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BadgePercent, CreditCard, Tag } from "lucide-react";
+import { ArrowLeft, BadgePercent, CreditCard, Tag, Crown, Calendar, User } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { getAttribution, getDiscountInfo } from "@/lib/attribution";
-import { getUser } from "@/lib/auth";
+import { activatePlan, assignExpert, getUser, getPlanLabel } from "@/lib/auth";
 import { createOrder, getPlan, validatePromoCode } from "@/lib/billing";
 
 const Checkout = () => {
@@ -21,6 +21,7 @@ const Checkout = () => {
   const user = useMemo(() => getUser(), []);
   const planId = searchParams.get("plan");
   const plan = useMemo(() => getPlan(planId), [planId]);
+  const currentPlanLabel = user ? getPlanLabel(user.plan) : "Бесплатный";
 
   const discountInfo = useMemo(() => getDiscountInfo(), []);
   const attr = useMemo(() => getAttribution(), []);
@@ -80,9 +81,16 @@ const Checkout = () => {
         : undefined,
     });
 
+    // Activate plan based on type
+    if (plan.id === "ai_roadmap") {
+      activatePlan("basic", 30);
+    } else if (plan.id === "expert_mentorship") {
+      assignExpert(attr?.expertRef || "exp_default", 30);
+    }
+
     toast({
       title: "Оплата прошла (MVP)",
-      description: "Мы сформировали чек и активировали тариф",
+      description: "Тариф активирован. Проверь Dashboard.",
     });
 
     navigate(`/receipt/${order.id}`);
@@ -103,6 +111,24 @@ const Checkout = () => {
           </div>
 
           <div className="p-8 rounded-2xl bg-card border border-border/50 shadow-card">
+            {/* Current Plan & User Info */}
+            <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex items-center gap-3 mb-3">
+                <User className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.contact}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Crown className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Текущий тариф: {currentPlanLabel}</p>
+                  <p className="text-xs text-muted-foreground">После оплаты активируем новый тариф</p>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-primary" />

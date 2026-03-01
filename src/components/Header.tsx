@@ -5,9 +5,16 @@ import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
 import { getUser, subscribeAuth } from "@/lib/auth";
 
-const navLinks = [
+const publicLinks = [
   { href: "/", label: "Главная" },
   { href: "/courses", label: "Курсы" },
+  { href: "/consultants", label: "Консультанты" },
+];
+
+const privateLinks = [
+  { href: "/", label: "Главная" },
+  { href: "/courses", label: "Курсы" },
+  { href: "/consultants", label: "Консультанты" },
   { href: "/tracking", label: "Мои заявки" },
 ];
 
@@ -42,7 +49,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => {
+          {(isLoggedIn ? privateLinks : publicLinks).map((link) => {
             const isActive = location.pathname === link.href;
             return (
               <Link
@@ -66,12 +73,14 @@ const Header = ({ transparent = false }: HeaderProps) => {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            to={isLoggedIn ? "/dashboard" : "/assessment?type=school"}
-            className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            {isLoggedIn ? "Профиль" : "Начать"}
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              to="/dashboard"
+              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              Профиль
+            </Link>
+          ) : null}
         </div>
 
         {/* Mobile menu toggle */}
@@ -90,7 +99,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
           animate={{ opacity: 1, y: 0 }}
           className="md:hidden bg-card/95 backdrop-blur-2xl border-b border-border/30 px-4 py-4 space-y-2 rounded-b-3xl shadow-card"
         >
-          {navLinks.map((link) => (
+          {(isLoggedIn ? privateLinks : publicLinks).map((link) => (
             <Link
               key={link.href}
               to={link.href}
@@ -100,13 +109,15 @@ const Header = ({ transparent = false }: HeaderProps) => {
               {link.label}
             </Link>
           ))}
-          <Link
-            to={isLoggedIn ? "/dashboard" : "/assessment?type=school"}
-            onClick={() => setMobileOpen(false)}
-            className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
-          >
-            {isLoggedIn ? "Профиль" : "Начать"}
-          </Link>
+          {isLoggedIn && (
+            <Link
+              to="/dashboard"
+              onClick={() => setMobileOpen(false)}
+              className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
+            >
+              Профиль
+            </Link>
+          )}
         </motion.div>
       )}
     </motion.header>

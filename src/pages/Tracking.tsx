@@ -1,16 +1,25 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, ExternalLink, HeartOff } from "lucide-react";
+import { GraduationCap, ExternalLink, HeartOff, Crown, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { universityData } from "@/data/universities";
-import { getUser } from "@/lib/auth";
+import { getUser, getPlanLabel, isPlanActive } from "@/lib/auth";
 import { getWishlist, removeFromWishlist } from "@/lib/wishlist";
+import { MeetingCalendar } from "@/components/MeetingCalendar";
 
 const Tracking = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("calendar") !== "1") return;
+    const el = document.getElementById("calendar");
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [searchParams]);
 
   const user = useMemo(() => getUser(), []);
   const userId = user?.id || null;
@@ -27,6 +36,9 @@ const Tracking = () => {
 
       <div className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
+          <div className="mb-4">
+            <Button variant="ghost" className="gap-2" onClick={() => navigate("/dashboard")}>Назад</Button>
+          </div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -39,6 +51,71 @@ const Tracking = () => {
               Отслеживайте статус поступления в реальном времени
             </p>
           </motion.div>
+
+          <div id="calendar" />
+
+          {(user?.plan === "basic" || user?.plan === "expert") && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mb-10 p-6 rounded-2xl border ${
+                user?.plan === "expert"
+                  ? "bg-gradient-to-br from-amber-500/5 to-yellow-500/5 border-amber-500/30"
+                  : "bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className={user?.plan === "expert" ? "w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center" : "w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"}>
+                  <Crown className={user?.plan === "expert" ? "w-6 h-6 text-amber-600" : "w-6 h-6 text-primary"} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-heading font-bold text-foreground">
+                    {user?.plan === "expert" ? "Премиум консультации" : "Встречи с экспертом"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {isPlanActive(user) ? `Тариф ${getPlanLabel(user.plan)} активен` : `Тариф ${getPlanLabel(user.plan)} не активен`}
+                  </p>
+                </div>
+              </div>
+
+              {isPlanActive(user) ? (
+                <MeetingCalendar
+                  plan={user?.plan || "basic"}
+                  userName={user?.name || ""}
+                  userType={((user?.profile?.userType === "school" || user?.profile?.userType === "graduate" || user?.profile?.userType === "student")
+                    ? user.profile.userType
+                    : "school")}
+                />
+              ) : (
+                <div className="p-4 rounded-xl bg-card border border-border/50">
+                  <p className="text-sm font-medium text-foreground">Чтобы записаться на встречу, нужно продлить тариф</p>
+                  <p className="text-xs text-muted-foreground mt-1">Открой тарифы и выбери подходящий план</p>
+                  <div className="mt-4">
+                    <Button className="w-full" onClick={() => navigate("/paywall?upgrade=1")}>Улучшить тариф</Button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {(!user || user.plan === "free") && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-10 p-6 rounded-2xl border bg-muted/30 border-border"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-foreground/5 flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-heading font-bold text-foreground">Встречи с экспертом</h2>
+                  <p className="text-sm text-muted-foreground">Доступно в тарифах Basic и Expert</p>
+                </div>
+              </div>
+              <Button className="w-full" onClick={() => navigate("/paywall?upgrade=1")}>Посмотреть тарифы</Button>
+            </motion.div>
+          )}
 
           {wishlistedUniversities.length === 0 ? (
             <motion.div

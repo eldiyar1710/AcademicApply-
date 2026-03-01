@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Target, Star, Heart } from "lucide-react";
 import HeroBackground from "@/components/HeroBackground";
 import UserTypeCards from "@/components/UserTypeCards";
 import FeaturesSection from "@/components/FeaturesSection";
@@ -51,21 +51,55 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-12"
+            className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-6"
           >
             Наш AI-алгоритм поможет определить твои навыки, подобрать профессию
             и найти идеальный университет — бесплатно, по гранту или на платной основе
           </motion.p>
 
+          {/* Dream Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-orange-500/20 backdrop-blur-md border border-amber-500/30 text-amber-100">
+              <Star className="w-4 h-4 text-amber-400" />
+              <span className="text-sm font-medium">Твоя мечта начинается здесь</span>
+              <Heart className="w-4 h-4 text-rose-400" />
+            </div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-6 max-w-2xl mx-auto"
+            >
+              <p className="text-2xl md:text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-200 to-amber-400 mb-3">
+                Какая у тебя цель?
+              </p>
+              <p className="text-primary-foreground/70 text-base md:text-lg">
+                Поступить на грант в топовый вуз? Получить престижную профессию? 
+                <br className="hidden md:block" />
+                Или стать частью глобального сообщества профессионалов?
+              </p>
+            </motion.div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.45 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
             className="mb-8"
           >
-            <p className="text-primary-foreground/60 text-sm font-medium mb-6 tracking-wider uppercase">
-              Кто ты?
-            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Target className="w-5 h-5 text-primary-foreground/60" />
+              <p className="text-primary-foreground/60 text-sm font-medium tracking-wider uppercase">
+                Выбери, кто ты сегодня
+              </p>
+              <Target className="w-5 h-5 text-primary-foreground/60" />
+            </div>
           </motion.div>
 
           <UserTypeCards />
