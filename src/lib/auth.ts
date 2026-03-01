@@ -149,6 +149,10 @@ export const registerUser = async (input: {
 
   storageSet(USER_KEY, user);
   console.debug("registerUser: регистрация завершена");
+  
+  // Создать реферальный код для нового пользователя
+  createReferralCode(user.id);
+  
   return user;
 };
 

@@ -97,7 +97,7 @@ const QRRegister = () => {
         });
         
         // Перенаправляем на страницу выбора плана
-        navigate("/plans");
+        navigate("/dashboard");
       }
     } catch (error) {
       const e = error as any;
