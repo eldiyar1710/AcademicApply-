@@ -410,7 +410,7 @@ export const applyReferral = (referralCode: string) => {
 };
 
 export const getReferralLink = (referralCode: string) => {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://academicapply.com";
+  const baseUrl = typeof window !== "undefined" ? window.location.href.split('#')[0] : "https://academicapply.com";
   return `${baseUrl}?ref=${referralCode}`;
 };
 
