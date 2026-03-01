@@ -22,6 +22,7 @@ import Checkout from "./pages/Checkout";
 import Receipt from "./pages/Receipt";
 import QRRegister from "./pages/QRRegister";
 import Consultants from "./pages/Consultants";
+import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/qr-register" element={<QRRegister />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/receipt/:orderId" element={<Receipt />} />
           <Route path="/results" element={<Results />} />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { loginUser } from "@/lib/auth";
+import { loginUser, resetPassword, isConsultant } from "@/lib/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,22 +24,66 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await loginUser({ contact: email.trim(), password: password.trim() });
+      const user = await loginUser({ contact: email.trim(), password: password.trim() });
       toast({
         title: "Успешный вход",
         description: "Данные синхронизированы с Firebase",
       });
-      navigate("/dashboard");
+      
+      // Role-based navigation
+      if (isConsultant(user)) {
+        navigate("/consultant-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       const eAny = err as any;
-      const details = eAny?.code ? `${eAny.code}: ${eAny.message || ""}` : (eAny?.message || "");
+
+      const code = String(eAny?.code || "");
+      const friendly = (() => {
+        if (code === "auth/invalid-credential") {
+          return "Неверный email или пароль. Проверьте раскладку клавиатуры и попробуйте ещё раз. Если забыли пароль — нажмите «Забыли пароль?» ниже.";
+        }
+        if (code === "auth/user-not-found") {
+          return "Аккаунт с таким email не найден. Проверьте email или создайте аккаунт.";
+        }
+        if (code === "auth/wrong-password") {
+          return "Неверный пароль. Попробуйте ещё раз или восстановите пароль.";
+        }
+        if (code === "auth/too-many-requests") {
+          return "Слишком много попыток входа. Подождите несколько минут и попробуйте снова.";
+        }
+        if (code === "auth/network-request-failed") {
+          return "Проблема с интернетом. Проверьте соединение и попробуйте снова.";
+        }
+        return "Не удалось войти. Проверьте данные и попробуйте ещё раз.";
+      })();
+
       toast({
         title: "Ошибка входа",
-        description: details || "Не удалось войти",
+        description: friendly,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      await resetPassword(email.trim());
+      toast({
+        title: "Письмо отправлено",
+        description: "Проверьте почту, чтобы восстановить пароль",
+      });
+    } catch (err) {
+      const eAny = err as any;
+      const details = eAny?.code ? `${eAny.code}: ${eAny.message || ""}` : (eAny?.message || "");
+      toast({
+        title: "Ошибка",
+        description: details || "Не удалось отправить письмо",
+        variant: "destructive",
+      });
     }
   };
 
@@ -59,7 +103,6 @@ const Login = () => {
 
           <div className="p-8 rounded-2xl bg-card border border-border/50 shadow-card">
             <h1 className="text-2xl font-heading font-bold text-foreground mb-2">Войти</h1>
-            <p className="text-sm text-muted-foreground mb-6">Вход через Firebase (Email/Password)</p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -99,6 +142,16 @@ const Login = () => {
 
               <Button type="submit" size="lg" className="w-full" disabled={!canSubmit || loading}>
                 {loading ? "Вход..." : "Войти"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={handleResetPassword}
+                disabled={!email.trim().includes("@") || loading}
+              >
+                Забыли пароль?
               </Button>
 
               <Button type="button" variant="outline" className="w-full" onClick={() => navigate("/register")}

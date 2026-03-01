@@ -34,13 +34,17 @@ export const saveUserToDB = async (user: User) => {
 // Получить пользователя из Realtime Database
 export const getUserFromDB = async (userId: string): Promise<User | null> => {
   try {
+    console.debug("getUserFromDB: запрос пользователя", { userId });
     const snapshot = await get(ref(db, `users/${userId}`));
     if (snapshot.exists()) {
-      return snapshot.val() as User;
+      const userData = snapshot.val() as User;
+      console.debug("getUserFromDB: пользователь найден", { name: userData.name, timezone: userData.timezone, contact: userData.contact });
+      return userData;
     }
+    console.debug("getUserFromDB: пользователь не найден");
     return null;
   } catch (error) {
-    console.error("Error getting user from DB:", error);
+    console.error("getUserFromDB: ошибка получения пользователя", error);
     return null;
   }
 };

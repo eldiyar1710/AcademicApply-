@@ -63,17 +63,27 @@ export const syncUserToFirebase = async (user: User) => {
 // Получить полные данные пользователя из Firebase
 export const getFullUserFromFirebase = async (userId: string) => {
   try {
+    console.debug("getFullUserFromFirebase: запрос данных пользователя", { userId });
     const userSnapshot = await get(ref(db, `users/${userId}`));
     const statsSnapshot = await get(ref(db, `stats/${userId}`));
     const progressSnapshot = await get(ref(db, `progress/${userId}`));
 
-    return {
+    const result = {
       user: userSnapshot.exists() ? userSnapshot.val() : null,
       stats: statsSnapshot.exists() ? statsSnapshot.val() : null,
       progress: progressSnapshot.exists() ? progressSnapshot.val() : null
     };
+
+    console.debug("getFullUserFromFirebase: результат", {
+      hasUser: !!result.user,
+      hasStats: !!result.stats,
+      hasProgress: !!result.progress,
+      userName: result.user?.name
+    });
+
+    return result;
   } catch (error) {
-    console.error("Error getting user from Firebase:", error);
+    console.error("getFullUserFromFirebase: ошибка получения данных", error);
     return { user: null, stats: null, progress: null };
   }
 };

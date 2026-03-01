@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BadgePercent, Crown, LogOut, ArrowRight, Calendar, UserCheck, MessageCircle, Heart, Target, GraduationCap } from "lucide-react";
@@ -17,6 +17,7 @@ import { getWishlist, toggleWishlist } from "@/lib/wishlist";
 import { useToast } from "@/hooks/use-toast";
 import ReferralSystem from "@/components/ReferralSystem";
 import QRCodeSystem from "@/components/QRCodeSystem";
+import { getUserFromDB } from "@/lib/firebaseAuth";
 
 const formatRemaining = (ms: number) => {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -30,9 +31,48 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  const user = useMemo(() => getUser(), []);
+  const [user, setUser] = useState(() => getUser());
   const discount = useMemo(() => getDiscountInfo(), []);
   const progress = getProfileProgress(user);
+
+  // Sync user data from Firebase on mount and when auth changes
+  useEffect(() => {
+    const syncUser = async () => {
+      const currentUser = getUser();
+      console.debug("Dashboard: syncUser - текущий пользователь из localStorage", currentUser);
+      if (currentUser?.id) {
+        try {
+          const freshUser = await getUserFromDB(currentUser.id);
+          console.debug("Dashboard: syncUser - пользователь из RTDB", freshUser);
+          if (freshUser && JSON.stringify(freshUser) !== JSON.stringify(currentUser)) {
+            console.debug("Dashboard: обновляем данные пользователя из RTDB", { name: freshUser.name, timezone: freshUser.timezone });
+            setUser(freshUser);
+          } else {
+            console.debug("Dashboard: данные не изменились, используем localStorage");
+            setUser(currentUser);
+          }
+        } catch (err) {
+          console.error("Dashboard: ошибка синхронизации пользователя", err);
+          setUser(currentUser);
+        }
+      } else {
+        console.debug("Dashboard: нет пользователя в localStorage");
+        setUser(null);
+      }
+    };
+    
+    syncUser();
+    
+    // Listen for auth changes
+    const handleAuthChange = () => {
+      const updatedUser = getUser();
+      console.debug("Dashboard: auth change event", { name: updatedUser?.name, timezone: updatedUser?.timezone });
+      setUser(updatedUser);
+    };
+    
+    window.addEventListener("aa_auth_changed", handleAuthChange);
+    return () => window.removeEventListener("aa_auth_changed", handleAuthChange);
+  }, []);
 
   // Debug: Log user information
   console.log('Dashboard Debug:', { 

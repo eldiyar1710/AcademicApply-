@@ -34,9 +34,16 @@ const ConsultantList = () => {
 
   const loadConsultants = async () => {
     setLoading(true);
-    const data = await getConsultants();
-    setConsultants(data);
-    setLoading(false);
+    console.debug("ConsultantList: загрузка консультантов");
+    try {
+      const data = await getConsultants();
+      console.debug("ConsultantList: получено консультантов", { count: data.length, data });
+      setConsultants(data);
+    } catch (error) {
+      console.error("ConsultantList: ошибка загрузки консультантов", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filterConsultants = () => {

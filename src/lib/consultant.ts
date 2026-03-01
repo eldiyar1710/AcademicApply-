@@ -17,6 +17,12 @@ export interface Consultant {
   bio: string;
   avatar?: string;
   createdAt: string;
+  // Additional fields for dashboard
+  totalClients?: number;
+  successRate?: number;
+  education?: string[];
+  achievements?: string[];
+  availability?: string[];
 }
 
 export interface Meeting {
@@ -51,17 +57,22 @@ export const addConsultant = async (consultant: Omit<Consultant, 'id' | 'created
 // Получить всех консультантов
 export const getConsultants = async (): Promise<Consultant[]> => {
   try {
+    console.debug("getConsultants: запрос всех консультантов из Firebase");
     const snapshot = await get(ref(db, "consultants"));
     if (snapshot.exists()) {
       const consultants = snapshot.val();
-      return Object.keys(consultants).map(key => ({
+      console.debug("getConsultants: данные получены", { raw: consultants });
+      const result = Object.keys(consultants).map(key => ({
         id: key,
         ...consultants[key]
       })) as Consultant[];
+      console.debug("getConsultants: обработано консультантов", { count: result.length });
+      return result;
     }
+    console.debug("getConsultants: консультанты не найдены в Firebase");
     return [];
   } catch (error) {
-    console.error("Error getting consultants:", error);
+    console.error("getConsultants: ошибка получения консультантов", error);
     return [];
   }
 };

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
-import { getUser, subscribeAuth } from "@/lib/auth";
+import { getUser, logout, subscribeAuth } from "@/lib/auth";
 
 const publicLinks = [
   { href: "/", label: "Главная" },
@@ -74,13 +74,29 @@ const Header = ({ transparent = false }: HeaderProps) => {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
           {isLoggedIn ? (
+            <>
+              <Link
+                to="/dashboard"
+                className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
+              >
+                Профиль
+              </Link>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="px-6 py-2.5 rounded-full bg-muted text-foreground text-sm font-semibold hover:bg-muted/80 transition-all duration-300"
+              >
+                Выйти
+              </button>
+            </>
+          ) : (
             <Link
-              to="/dashboard"
+              to="/login"
               className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
             >
-              Профиль
+              Login
             </Link>
-          ) : null}
+          )}
         </div>
 
         {/* Mobile menu toggle */}
@@ -110,12 +126,33 @@ const Header = ({ transparent = false }: HeaderProps) => {
             </Link>
           ))}
           {isLoggedIn && (
+            <>
+              <Link
+                to="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
+              >
+                Профиль
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setMobileOpen(false);
+                }}
+                className="w-full px-4 py-3 rounded-2xl bg-muted text-foreground text-sm font-semibold text-center shadow-md"
+              >
+                Выйти
+              </button>
+            </>
+          )}
+          {!isLoggedIn && (
             <Link
-              to="/dashboard"
+              to="/login"
               onClick={() => setMobileOpen(false)}
               className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
             >
-              Профиль
+              Login
             </Link>
           )}
         </motion.div>
