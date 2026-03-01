@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, Sparkles, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { saveLastResultsQuery } from "@/lib/results";
 
 type Question = {
   id: string;
@@ -11,6 +12,10 @@ type Question = {
   type: "single" | "multi";
   options: string[];
   forTypes?: string[];
+  dependsOn?: {
+    id: string;
+    anyOf: string[];
+  };
 };
 
 const allQuestions: Question[] = [
@@ -38,6 +43,59 @@ const allQuestions: Question[] = [
     ],
     forTypes: ["school", "graduate"],
   },
+  // Graduate-specific: timeline & readiness
+  {
+    id: "graduate_timeline",
+    question: "Когда ты планируешь подать документы?",
+    type: "single",
+    options: ["В ближайшие 1–2 месяца", "В этом учебном году", "В следующем году", "Пока не знаю"],
+    forTypes: ["graduate"],
+  },
+  {
+    id: "graduate_chosen",
+    question: "Ты уже выбрал(а) страну/университет?",
+    type: "single",
+    options: ["Да, уже выбрал(а)", "Частично (есть страны/варианты)", "Нет, хочу подобрать"],
+    forTypes: ["graduate"],
+  },
+  {
+    id: "graduate_target_country",
+    question: "Какие страны ты рассматриваешь в первую очередь?",
+    type: "multi",
+    options: ["США", "Канада", "Великобритания", "Германия", "Италия", "Польша", "Южная Корея", "Турция", "Другая"],
+    forTypes: ["graduate"],
+    dependsOn: { id: "graduate_chosen", anyOf: ["Да, уже выбрал(а)", "Частично (есть страны/варианты)"] },
+  },
+  {
+    id: "graduate_deadline",
+    question: "Ты знаешь дедлайн подачи документов?",
+    type: "single",
+    options: ["Да, знаю", "Примерно знаю", "Нет"],
+    forTypes: ["graduate"],
+    dependsOn: { id: "graduate_chosen", anyOf: ["Да, уже выбрал(а)", "Частично (есть страны/варианты)"] },
+  },
+  {
+    id: "graduate_deadline_window",
+    question: "Когда дедлайн? (примерно)",
+    type: "single",
+    options: ["1–4 недели", "1–2 месяца", "3–6 месяцев", "6+ месяцев", "Не уверен(а)"],
+    forTypes: ["graduate"],
+    dependsOn: { id: "graduate_deadline", anyOf: ["Да, знаю", "Примерно знаю"] },
+  },
+  {
+    id: "graduate_level",
+    question: "На какой уровень ты хочешь поступать?",
+    type: "single",
+    options: ["Бакалавриат", "Foundation / Pathway", "Колледж", "Пока не знаю"],
+    forTypes: ["graduate"],
+  },
+  {
+    id: "graduate_docs",
+    question: "Какие документы/экзамены у тебя уже есть?",
+    type: "multi",
+    options: ["Паспорт", "Аттестат/диплом", "IELTS/TOEFL", "SAT/ACT", "Мотивационное письмо", "Рекомендации", "Портфолио"],
+    forTypes: ["graduate"],
+  },
   // Student-specific
   {
     id: "student_goal",
@@ -49,6 +107,13 @@ const allQuestions: Question[] = [
       "Учиться по обмену за рубежом",
       "Перейти в магистратуру в другом вузе",
     ],
+    forTypes: ["student"],
+  },
+  {
+    id: "student_target",
+    question: "Куда ты хочешь двигаться дальше?",
+    type: "single",
+    options: ["В другой университет", "На обмен", "В другую страну", "В магистратуру"],
     forTypes: ["student"],
   },
   // Student — current situation
@@ -127,6 +192,22 @@ const allQuestions: Question[] = [
       "Хочу найти грант, но рассмотрю и платное",
     ],
   },
+  {
+    id: "preferred_career",
+    question: "Какую профессию ты хочешь в итоге?",
+    type: "single",
+    options: [
+      "Data Scientist",
+      "Software Engineer",
+      "AI/ML Engineer",
+      "Business Analyst",
+      "Financial Analyst",
+      "Biomedical Engineer",
+      "Public Health Specialist",
+      "UX/UI Designer",
+      "Пока не знаю",
+    ],
+  },
 ];
 
 const Assessment = () => {
@@ -144,8 +225,16 @@ const Assessment = () => {
     });
   }, [userType]);
 
-  const currentQ = questions[step];
-  const progress = ((step + 1) / questions.length) * 100;
+  const visibleQuestions = useMemo(() => {
+    return questions.filter((q) => {
+      if (!q.dependsOn) return true;
+      const current = answers[q.dependsOn.id] || [];
+      return current.some((v) => q.dependsOn!.anyOf.includes(v));
+    });
+  }, [answers, questions]);
+
+  const currentQ = visibleQuestions[step];
+  const progress = ((step + 1) / visibleQuestions.length) * 100;
   const selected = answers[currentQ?.id] || [];
 
   const toggleOption = (option: string) => {
@@ -162,15 +251,21 @@ const Assessment = () => {
   const canNext = selected.length > 0;
 
   const handleNext = () => {
-    if (step < questions.length - 1) {
+    if (step < visibleQuestions.length - 1) {
       setStep(step + 1);
     } else {
       const params = new URLSearchParams();
       params.set("type", userType);
+
+      searchParams.forEach((value, key) => {
+        if (!params.has(key)) params.set(key, value);
+      });
+
       Object.entries(answers).forEach(([key, vals]) => {
         params.set(key, vals.join(","));
       });
-      navigate(`/results?${params.toString()}`);
+      saveLastResultsQuery(params.toString());
+      navigate(`/paywall?${params.toString()}`);
     }
   };
 
@@ -190,7 +285,7 @@ const Assessment = () => {
           <div className="text-center">
             <span className="text-xs text-primary font-medium">{userTypeTitle}</span>
             <p className="text-sm text-muted-foreground font-medium">
-              {step + 1} из {questions.length}
+              {step + 1} из {visibleQuestions.length}
             </p>
           </div>
           <div className="w-16" />
@@ -241,7 +336,7 @@ const Assessment = () => {
                           animate={{ scale: 1 }}
                           className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
                         >
-                          <Check className="w-3 h-3 text-primary-foreground" />
+                        visibleQ <Check className="w-3 h-3 text-primary-foreground" />
                         </motion.div>
                       )}
                     </motion.button>
@@ -282,7 +377,7 @@ const Assessment = () => {
               size="lg"
               className="gap-2 px-8"
             >
-              {step === questions.length - 1 ? (
+              {step === visibleQuestions.length - 1 ? (
                 <>
                   <Sparkles className="w-4 h-4" /> Получить рекомендации
                 </>

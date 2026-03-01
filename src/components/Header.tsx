@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
+import { getUser, subscribeAuth } from "@/lib/auth";
 
 const navLinks = [
   { href: "/", label: "Главная" },
@@ -17,6 +18,11 @@ interface HeaderProps {
 const Header = ({ transparent = false }: HeaderProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getUser()));
+
+  useEffect(() => {
+    return subscribeAuth(() => setIsLoggedIn(Boolean(getUser())));
+  }, []);
 
   return (
     <motion.header
@@ -61,10 +67,10 @@ const Header = ({ transparent = false }: HeaderProps) => {
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Link
-            to="/assessment?type=school"
+            to={isLoggedIn ? "/dashboard" : "/assessment?type=school"}
             className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
           >
-            Начать
+            {isLoggedIn ? "Профиль" : "Начать"}
           </Link>
         </div>
 
@@ -95,11 +101,11 @@ const Header = ({ transparent = false }: HeaderProps) => {
             </Link>
           ))}
           <Link
-            to="/assessment?type=school"
+            to={isLoggedIn ? "/dashboard" : "/assessment?type=school"}
             onClick={() => setMobileOpen(false)}
             className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
           >
-            Начать
+            {isLoggedIn ? "Профиль" : "Начать"}
           </Link>
         </motion.div>
       )}

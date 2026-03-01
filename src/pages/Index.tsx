@@ -9,6 +9,14 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
 const Index = () => {
+  const scrollToHowItWorks = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Header transparent />
@@ -68,7 +76,11 @@ const Index = () => {
             transition={{ delay: 1.5 }}
             className="mt-16"
           >
-            <a href="#how-it-works" className="inline-flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors text-sm">
+            <a 
+              href="#how-it-works" 
+              onClick={scrollToHowItWorks}
+              className="inline-flex items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors text-sm cursor-pointer"
+            >
               Как это работает <ArrowRight className="w-4 h-4" />
             </a>
           </motion.div>
