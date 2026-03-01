@@ -7,8 +7,21 @@ import StatsSection from "@/components/StatsSection";
 import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const qr = searchParams.get("qr");
+    const source = searchParams.get("source");
+    if (qr === "discount30" && source === "qrcode") {
+      navigate(`/qr-register?qr=${qr}&source=${source}`);
+    }
+  }, [searchParams, navigate]);
+
   const scrollToHowItWorks = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const element = document.getElementById('how-it-works');

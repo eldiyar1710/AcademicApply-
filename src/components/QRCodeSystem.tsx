@@ -29,7 +29,7 @@ const QRCodeSystem = ({ className }: QRCodeSystemProps) => {
     setIsGenerating(true);
     try {
       // Создаем специальную ссылку для QR-кода с 30% скидкой
-      const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://academicapply.com";
+      const baseUrl = typeof window !== "undefined" ? window.location.href.split('#')[0] : "https://academicapply.com";
       const qrSpecificUrl = `${baseUrl}?qr=discount30&source=qrcode`;
       setQrLink(qrSpecificUrl);
       

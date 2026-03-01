@@ -439,6 +439,27 @@ const Dashboard = () => {
         />
       )}
 
+      {/* Уведомление о скидке для пользователей, зарегистрированных через QR */}
+      {user?.attributionSource === "qrcode" && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl mx-auto mt-8"
+        >
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-2xl">🎉</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-green-800">30% скидка активирована!</h3>
+                <p className="text-green-700">Вы зарегистрировались через QR-код и получаете скидку 30% на все тарифы.</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Реферальная система и QR-коды */}
       <div className="max-w-4xl mx-auto mt-8">
         <ReferralSystem />
