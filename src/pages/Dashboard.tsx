@@ -31,6 +31,8 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
+  console.log("Dashboard component rendered");
+
   const [user, setUser] = useState(() => getUser());
   const discount = useMemo(() => getDiscountInfo(), []);
   const progress = getProfileProgress(user);

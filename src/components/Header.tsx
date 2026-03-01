@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -25,6 +25,7 @@ interface HeaderProps {
 const Header = ({ transparent = false }: HeaderProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getUser()));
 
   useEffect(() => {
@@ -75,12 +76,12 @@ const Header = ({ transparent = false }: HeaderProps) => {
         <div className="hidden md:flex items-center gap-3">
           {isLoggedIn ? (
             <>
-              <Link
-                to="/dashboard"
+              <button
+                onClick={() => navigate("/dashboard")}
                 className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Профиль
-              </Link>
+              </button>
               <button
                 type="button"
                 onClick={() => logout()}
@@ -127,13 +128,16 @@ const Header = ({ transparent = false }: HeaderProps) => {
           ))}
           {isLoggedIn && (
             <>
-              <Link
-                to="/dashboard"
-                onClick={() => setMobileOpen(false)}
+              <button
+                onClick={() => {
+                  console.log("Mobile profile button clicked");
+                  navigate("/dashboard");
+                  setMobileOpen(false);
+                }}
                 className="block px-4 py-3 rounded-2xl bg-primary text-primary-foreground text-sm font-semibold text-center shadow-md"
               >
                 Профиль
-              </Link>
+              </button>
               <button
                 type="button"
                 onClick={() => {

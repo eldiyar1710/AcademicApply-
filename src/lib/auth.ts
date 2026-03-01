@@ -149,6 +149,9 @@ export const registerUser = async (input: {
 
   storageSet(USER_KEY, user);
   console.debug("registerUser: регистрация завершена");
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(AUTH_EVENT));
+  }
   return user;
 };
 
@@ -312,7 +315,7 @@ export const hasAccess = (user: User | null, requiredPlan: User["plan"]) => {
   return PLAN_HIERARCHY[user.plan] >= PLAN_HIERARCHY[requiredPlan];
 };
 
-export const activatePlan = (plan: User["plan"], durationDays = 30) => {
+export const activatePlan = async (plan: User["plan"], durationDays = 30) => {
   const user = getUser();
   if (!user) return null;
   const now = new Date();
@@ -323,14 +326,17 @@ export const activatePlan = (plan: User["plan"], durationDays = 30) => {
     planActivatedAt: now.toISOString(),
     planExpiresAt: plan === "free" ? undefined : expiresAt.toISOString(),
   };
+  
   storageSet(USER_KEY, updated);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(AUTH_EVENT));
   }
+
+  await syncUserToFirebase(updated);
   return updated;
 };
 
-export const assignExpert = (expertId: string, durationDays = 30) => {
+export const assignExpert = async (expertId: string, durationDays = 30) => {
   const user = getUser();
   if (!user) return null;
   const now = new Date();
@@ -346,6 +352,8 @@ export const assignExpert = (expertId: string, durationDays = 30) => {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(AUTH_EVENT));
   }
+
+  await syncUserToFirebase(updated);
   return updated;
 };
 

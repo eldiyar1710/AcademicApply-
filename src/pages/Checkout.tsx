@@ -65,7 +65,7 @@ const Checkout = () => {
   const promoPercent = promo.ok ? promo.percent : 0;
   const final = Math.round(plan.priceUsd * (100 - Math.min(80, discountPercent + promoPercent)) / 100);
 
-  const pay = () => {
+  const pay = async () => {
     const order = createOrder({
       plan,
       discountPercent,
@@ -83,9 +83,9 @@ const Checkout = () => {
 
     // Activate plan based on type
     if (plan.id === "ai_roadmap") {
-      activatePlan("basic", 30);
+      await activatePlan("basic", 30);
     } else if (plan.id === "expert_mentorship") {
-      assignExpert(attr?.expertRef || "exp_default", 30);
+      await assignExpert(attr?.expertRef || "exp_default", 30);
     }
 
     toast({
