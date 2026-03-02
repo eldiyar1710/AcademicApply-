@@ -7,6 +7,8 @@ import StatsSection from "@/components/StatsSection";
 import HowItWorks from "@/components/HowItWorks";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { HiveTest } from "@/components/HiveTest";
+import { SystemDemo } from "@/components/SystemDemo";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -137,6 +139,27 @@ const Index = () => {
       <StatsSection />
       <HowItWorks />
       <FeaturesSection />
+      
+      {/* Hive + Firebase Test Section */}
+      <section className="py-16 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">
+            Hive + Firebase Realtime Database Demo
+          </h2>
+          <HiveTest />
+        </div>
+      </section>
+      
+      {/* Autonomous System Demo */}
+      <section className="py-16 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">
+            Автономная система управления
+          </h2>
+          <SystemDemo />
+        </div>
+      </section>
+      
       <Footer />
     </div>
   );

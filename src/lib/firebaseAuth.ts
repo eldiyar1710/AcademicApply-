@@ -1,8 +1,8 @@
-import { getDatabase, ref, set, get, push, update, remove } from "firebase/database";
-import { app } from "./firebase";
+// import { getDatabase, ref, set, get, push, update, remove } from "firebase/database";
+// import { app } from "./firebase";
 import { User } from "./auth";
 
-const db = getDatabase(app);
+// const db = getDatabase(app);
 
 const stripUndefined = (value: any): any => {
   if (Array.isArray(value)) return value.map(stripUndefined);
@@ -17,27 +17,27 @@ const stripUndefined = (value: any): any => {
   return value;
 };
 
-// Сохранить пользователя в Realtime Database
+// Сохранить пользователя в localStorage
 export const saveUserToDB = async (user: User) => {
   try {
-    await set(ref(db, `users/${user.id}`), {
+    localStorage.setItem(`user_${user.id}`, JSON.stringify({
       ...stripUndefined(user),
       createdAt: new Date().toISOString()
-    });
+    }));
     return true;
   } catch (error) {
-    console.error("Error saving user to DB:", error);
+    console.error("Error saving user to localStorage:", error);
     throw error;
   }
 };
 
-// Получить пользователя из Realtime Database
+// Получить пользователя из localStorage
 export const getUserFromDB = async (userId: string): Promise<User | null> => {
   try {
     console.debug("getUserFromDB: запрос пользователя", { userId });
-    const snapshot = await get(ref(db, `users/${userId}`));
-    if (snapshot.exists()) {
-      const userData = snapshot.val() as User;
+    const data = localStorage.getItem(`user_${userId}`);
+    if (data) {
+      const userData = JSON.parse(data) as User;
       console.debug("getUserFromDB: пользователь найден", { name: userData.name, timezone: userData.timezone, contact: userData.contact });
       return userData;
     }
@@ -52,10 +52,14 @@ export const getUserFromDB = async (userId: string): Promise<User | null> => {
 // Обновить профиль пользователя
 export const updateUserInDB = async (userId: string, updates: Partial<User>) => {
   try {
-    await update(ref(db, `users/${userId}`), stripUndefined(updates));
+    const existing = await getUserFromDB(userId);
+    if (existing) {
+      const updated = { ...existing, ...updates };
+      await saveUserToDB(updated);
+    }
     return true;
   } catch (error) {
-    console.error("Error updating user in DB:", error);
+    console.error("Error updating user in localStorage:", error);
     return false;
   }
 };
@@ -63,12 +67,17 @@ export const updateUserInDB = async (userId: string, updates: Partial<User>) => 
 // Получить всех пользователей (для админа)
 export const getAllUsers = async (): Promise<User[]> => {
   try {
-    const snapshot = await get(ref(db, 'users'));
-    if (snapshot.exists()) {
-      const users = snapshot.val();
-      return Object.values(users) as User[];
+    const users: User[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('user_')) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          users.push(JSON.parse(data));
+        }
+      }
     }
-    return [];
+    return users;
   } catch (error) {
     console.error("Error getting all users:", error);
     return [];
@@ -78,10 +87,10 @@ export const getAllUsers = async (): Promise<User[]> => {
 // Сохранить прогресс пользователя
 export const saveUserProgress = async (userId: string, progress: any) => {
   try {
-    await set(ref(db, `progress/${userId}`), {
+    localStorage.setItem(`progress_${userId}`, JSON.stringify({
       ...progress,
       updatedAt: new Date().toISOString()
-    });
+    }));
     return true;
   } catch (error) {
     console.error("Error saving progress:", error);
@@ -92,9 +101,9 @@ export const saveUserProgress = async (userId: string, progress: any) => {
 // Получить прогресс пользователя
 export const getUserProgress = async (userId: string) => {
   try {
-    const snapshot = await get(ref(db, `progress/${userId}`));
-    if (snapshot.exists()) {
-      return snapshot.val();
+    const data = localStorage.getItem(`progress_${userId}`);
+    if (data) {
+      return JSON.parse(data);
     }
     return null;
   } catch (error) {
@@ -106,12 +115,12 @@ export const getUserProgress = async (userId: string) => {
 // Сохранить заявку пользователя
 export const saveApplication = async (userId: string, application: any) => {
   try {
-    const newApplicationRef = push(ref(db, `applications/${userId}`));
-    await set(newApplicationRef, {
+    const key = `application_${userId}_${Date.now()}`;
+    localStorage.setItem(key, JSON.stringify({
       ...application,
       createdAt: new Date().toISOString()
-    });
-    return newApplicationRef.key;
+    }));
+    return key;
   } catch (error) {
     console.error("Error saving application:", error);
     return null;
@@ -121,11 +130,17 @@ export const saveApplication = async (userId: string, application: any) => {
 // Получить заявки пользователя
 export const getUserApplications = async (userId: string) => {
   try {
-    const snapshot = await get(ref(db, `applications/${userId}`));
-    if (snapshot.exists()) {
-      return snapshot.val();
+    const applications: Record<string, any> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(`application_${userId}_`)) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          applications[key] = JSON.parse(data);
+        }
+      }
     }
-    return {};
+    return applications;
   } catch (error) {
     console.error("Error getting applications:", error);
     return {};

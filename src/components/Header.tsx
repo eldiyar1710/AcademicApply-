@@ -16,6 +16,8 @@ const privateLinks = [
   { href: "/courses", label: "Курсы" },
   { href: "/consultants", label: "Консультанты" },
   { href: "/tracking", label: "Мои заявки" },
+  { href: "/subscription", label: "Подписка" },
+  { href: "/referrals", label: "Рефералы" },
 ];
 
 interface HeaderProps {

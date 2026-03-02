@@ -1,16 +1,18 @@
 import { storageGet, storageRemove, storageSet } from "@/lib/storage";
 import { saveUserToDB, getUserFromDB } from "./firebaseAuth";
-import { syncUserToFirebase } from "./syncService";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import { app } from "./firebase";
+import { referralSystem } from "./referral-system";
+import { subscriptionSystem } from "./subscription-system";
+// import { syncUserToFirebase } from "./syncService";
+// import {
+//   getAuth,
+//   onAuthStateChanged,
+//   signOut,
+//   createUserWithEmailAndPassword,
+//   signInWithEmailAndPassword,
+//   updateProfile,
+//   sendPasswordResetEmail,
+// } from "firebase/auth";
+// import { app } from "./firebase";
 
 export type User = {
   id: string;
@@ -47,18 +49,19 @@ export type User = {
 const USER_KEY = "aa_user";
 const AUTH_EVENT = "aa_auth_changed";
 
-const auth = getAuth(app);
+// const auth = getAuth(app);
 
 export const resetPassword = async (email: string) => {
   if (!email.includes("@")) {
     throw new Error("Для восстановления пароля нужен email");
   }
   try {
-    console.debug("resetPassword: отправка на email", email);
-    await sendPasswordResetEmail(auth, email);
-    console.debug("resetPassword: успешно отправлено");
+    console.debug("resetPassword: симуляция отправки на email", email);
+    // В реальном приложении здесь была бы отправка email
+    console.debug("resetPassword: успешно отправлено (симуляция)");
+    return true;
   } catch (err: any) {
-    console.error("resetPassword: ошибка Firebase", err);
+    console.error("resetPassword: ошибка", err);
     throw err;
   }
 };
@@ -101,27 +104,18 @@ export const registerUser = async (input: {
     eventSlug?: string;
     expertRef?: string;
   };
+  referralCode?: string;
 }) => {
-  const { name, contact: email, password, timezone, legalAcceptedAt, userType, role = "student", attribution } = input;
+  const { name, contact: email, password, timezone, legalAcceptedAt, userType, role = "student", attribution, referralCode } = input;
 
-  // 1. Создать пользователя в Firebase Auth, если есть пароль
-  let firebaseUser: any = null;
-  if (password) {
-    try {
-      console.debug("registerUser: создание Firebase Auth пользователя", { email });
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      firebaseUser = userCredential.user;
-      await updateProfile(firebaseUser, { displayName: name });
-      console.debug("registerUser: Firebase Auth пользователь создан", { uid: firebaseUser.uid });
-    } catch (err: any) {
-      console.error("registerUser: ошибка Firebase Auth", err);
-      throw err;
-    }
+  // 1. Проверить email (в реальном приложении здесь была бы валидация)
+  if (!email.includes("@")) {
+    throw new Error("Некорректный email");
   }
 
-  // 2. Сохранить в Realtime Database
+  // 2. Создать пользователя в localStorage
   const user: User = {
-    id: firebaseUser?.uid || randomId(),
+    id: randomId(),
     name,
     contact: email,
     timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -139,13 +133,14 @@ export const registerUser = async (input: {
   };
 
   try {
-    console.debug("registerUser: сохранение в RTDB", { uid: user.id });
+    console.debug("registerUser: сохранение в localStorage", { uid: user.id });
     await saveUserToDB(user);
-    console.debug("registerUser: успешно сохранено в RTDB");
+    console.debug("registerUser: успешно сохранено в localStorage");
   } catch (err: any) {
-    console.error("registerUser: ошибка сохранения в RTDB", err);
+    console.error("registerUser: ошибка сохранения", err);
     throw err;
   }
+
 
   storageSet(USER_KEY, user);
   console.debug("registerUser: регистрация завершена");
@@ -159,33 +154,43 @@ export const loginUser = async (input: { contact: string; password: string }) =>
   const { contact: email, password } = input;
   try {
     console.debug("loginUser: попытка входа", { email });
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const firebaseUser = userCredential.user;
-    console.debug("loginUser: Firebase auth успешен", { uid: firebaseUser.uid, email: firebaseUser.email });
-    // Убедимся, что профиль в RTDB есть
-    let dbUser = await getUserFromDB(firebaseUser.uid);
-    if (!dbUser) {
-      console.debug("loginUser: профиля в RTDB нет, создаём базовый");
-      dbUser = {
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName || "Пользователь",
-        contact: firebaseUser.email || email,
-        createdAt: new Date().toISOString(),
-        legalAcceptedAt: new Date().toISOString(),
-        role: "student", // Default role for new users
-        plan: "free",
-        profile: {},
-      };
-      await saveUserToDB(dbUser);
-    } else {
-      console.debug("loginUser: профиль в RTDB найден", { role: dbUser.role });
+    
+    // В реальном приложении здесь была бы проверка пароля
+    // Для демонстрации принимаем любой email с паролем > 5 символов
+    if (!email.includes("@") || password.length < 5) {
+      throw new Error("Некорректный email или пароль");
     }
+    
+    // Ищем пользователя в localStorage
+    let dbUser = null;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('user_')) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const user = JSON.parse(data);
+          if (user.contact === email) {
+            dbUser = user;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!dbUser) {
+      throw new Error("Пользователь не найден");
+    }
+    
+    console.debug("loginUser: пользователь найден", { uid: dbUser.id, email: dbUser.contact });
     storageSet(USER_KEY, dbUser);
-    await syncUserToFirebase(dbUser);
-    if (typeof window !== "undefined") window.dispatchEvent(new Event(AUTH_EVENT));
+    
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(AUTH_EVENT));
+    }
+    
     return dbUser;
   } catch (err: any) {
-    console.error("loginUser: ошибка Firebase", err);
+    console.error("loginUser: ошибка входа", err);
     throw err;
   }
 };
@@ -198,9 +203,6 @@ export const updateUserProfile = (patch: Partial<User["profile"]>) => {
   // Сохранить в localStorage
   storageSet(USER_KEY, updated);
   
-  // Полная синхронизация с Firebase
-  syncUserToFirebase(updated);
-  
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(AUTH_EVENT));
   }
@@ -209,60 +211,38 @@ export const updateUserProfile = (patch: Partial<User["profile"]>) => {
 
 export const logout = async () => {
   try {
-    console.debug("logout: выход из Firebase Auth");
-    await signOut(auth);
-    console.debug("logout: Firebase auth выход выполнен");
+    console.debug("logout: выход из системы");
+    storageRemove(USER_KEY);
+    console.debug("logout: локальные данные очищены");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(AUTH_EVENT));
+    }
   } catch (err: any) {
-    console.error("logout: ошибка Firebase signOut", err);
-    // Продолжаем выход даже если signOut упал
-  }
-  storageRemove(USER_KEY);
-  console.debug("logout: локальные данные очищены");
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(AUTH_EVENT));
+    console.error("logout: ошибка выхода", err);
   }
 };
 
 export const initAuthListener = () => {
   if (typeof window === "undefined") return () => {};
-
-  return onAuthStateChanged(auth, async (firebaseUser) => {
-    console.debug("initAuthListener: состояние изменилось", { uid: firebaseUser?.uid, email: firebaseUser?.email });
-    if (!firebaseUser) {
-      console.debug("initAuthListener: нет Firebase пользователя, выходим");
-      storageRemove(USER_KEY);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event(AUTH_EVENT));
-      }
-      return;
+  
+  // Проверяем localStorage при загрузке
+  const user = getUser();
+  if (user) {
+    console.debug("initAuthListener: пользователь найден в localStorage", { name: user.name });
+    storageSet(USER_KEY, user);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(AUTH_EVENT));
     }
-
-    const dbUser = await getUserFromDB(firebaseUser.uid);
-    if (dbUser) {
-      console.debug("initAuthListener: профиль RTDB найден", { name: dbUser.name });
-      storageSet(USER_KEY, dbUser);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event(AUTH_EVENT));
-      }
-    } else {
-      console.debug("initAuthListener: профиля RTDB нет, создаём базовый");
-      const minimalUser: User = {
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName || "Пользователь",
-        contact: firebaseUser.email || "",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        legalAcceptedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        plan: "free",
-        profile: {},
-      };
-      await saveUserToDB(minimalUser);
-      storageSet(USER_KEY, minimalUser);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event(AUTH_EVENT));
-      }
+  } else {
+    console.debug("initAuthListener: пользователь не найден в localStorage");
+  }
+  
+  return () => {
+    // Cleanup function
+    if (typeof window !== "undefined") {
+      window.removeEventListener(AUTH_EVENT, () => {});
     }
-  });
+  };
 };
 
 export const subscribeAuth = (callback: () => void) => {

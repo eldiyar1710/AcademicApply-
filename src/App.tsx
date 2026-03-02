@@ -24,6 +24,8 @@ import QRRegister from "./pages/QRRegister";
 import Consultants from "./pages/Consultants";
 import ConsultantDashboard from "./pages/ConsultantDashboard";
 import NotFound from "./pages/NotFound";
+import { ReferralDashboard } from "@/components/ReferralDashboard";
+import { SubscriptionDashboard } from "@/components/SubscriptionDashboard";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +55,8 @@ const App = () => (
           <Route path="/plan" element={<RequirePlan requiredPlan="basic"><BasicPlanPage /></RequirePlan>} />
           <Route path="/expert-plan" element={<RequirePlan requiredPlan="expert"><ExpertPlanPage /></RequirePlan>} />
           <Route path="/tracking" element={<RequirePlan requiredPlan="basic"><Tracking /></RequirePlan>} />
+          <Route path="/referrals" element={<ReferralDashboard />} />
+          <Route path="/subscription" element={<SubscriptionDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </HashRouter>
